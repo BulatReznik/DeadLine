@@ -16,6 +16,7 @@
     "appId": "com.deadline.widget",
     "productName": "DeadLine",
     "artifactName": "DeadLine-${version}-portable.${ext}",
+    "icon": "assets/deadline.ico",
     "directories": {
       "output": "release"
     },
@@ -36,6 +37,7 @@
       "package.json"
     ],
     "win": {
+      "icon": "assets/deadline.ico",
       "target": [
         {
           "target": "portable",
