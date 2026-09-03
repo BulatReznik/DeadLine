@@ -1,0 +1,49 @@
+{
+  "name": "countdown-cool-skeletons",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A spooky Windows 11 desktop countdown widget.",
+  "main": "main.js",
+  "scripts": {
+    "start": "node launcher.js",
+    "dist": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^36.3.2",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.deadline.widget",
+    "productName": "DeadLine",
+    "artifactName": "DeadLine-${version}-portable.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "extraResources": [
+      {
+        "from": "assets/tray-icon.png",
+        "to": "tray-icon.png"
+      }
+    ],
+    "files": [
+      "assets/**/*",
+      "fonts/**/*",
+      "index.html",
+      "styles.css",
+      "renderer.js",
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; script-src 'self';" />
+    <title>DeadLine</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="widget-shell layout-cards">
+      <div class="ambient-glow glow-one"></div>
+      <div class="ambient-glow glow-two"></div>
+
+      <header class="topbar drag-region">
+        <div class="brand no-drag">
+          <span class="brand-mark">☠</span>
+          <span class="brand-copy"><strong>DeadLine</strong></span>
+        </div>
+        <div class="window-actions no-drag">
+          <button class="settings-trigger icon-settings" id="settings-trigger" title="Открыть настройки" aria-label="Открыть настройки">⚙</button>
+          <button class="icon-button close-button" id="close-button" title="Закрыть виджет" aria-label="Закрыть виджет">×</button>
+        </div>
+      </header>
+
+      <section class="widget-content">
+        <div class="skeleton-column">
+          <div class="skeleton-stage" id="skeleton-stage">
+            <img class="skeleton-image" id="skeleton-image" src="assets/skeleton-classic.gif" alt="Классический скелет" />
+            <button class="head-hotspot" id="head-color-trigger" type="button" title="Нажмите на скелет, чтобы сменить цвет" aria-label="Сменить цвет скелета"></button>
+            <div class="ground-shadow"></div>
+          </div>
+        </div>
+
+        <div class="details-column">
+          <div class="event-copy">
+            <p class="kicker">СЛЕДУЮЩЕЕ СОБЫТИЕ</p>
+            <h1 id="event-title">Отпуск</h1>
+            <p class="event-meta"><span id="event-date-label">01 ИЮН 2027</span><span class="slash">/</span><span id="event-time-label">09:00</span></p>
+          </div>
+
+          <div class="countdown-head">
+            <span id="countdown-caption">До события</span>
+            <span class="live-indicator"><i></i> СИНХРОНИЗИРОВАНО</span>
+          </div>
+
+          <div class="countdown-grid" id="countdown-grid" aria-label="Оставшееся время">
+            <div class="time-unit"><strong id="months">01</strong><span>МЕС</span></div>
+            <div class="time-unit"><strong id="days">27</strong><span>ДН</span></div>
+            <div class="time-unit"><strong id="hours">14</strong><span>Ч</span></div>
+            <div class="time-unit"><strong id="minutes">08</strong><span>МИН</span></div>
+            <div class="time-unit seconds-unit"><strong id="seconds">33</strong><span>СЕК</span></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="settings-panel" id="settings-panel" aria-hidden="true">
+        <div class="panel-heading">
+          <div><p class="kicker">НАСТРОЙКИ</p><h2>Настроить виджет</h2></div>
+          <button class="panel-close" id="panel-close" title="Закрыть настройки" aria-label="Закрыть настройки">×</button>
+        </div>
+
+        <section class="settings-section">
+          <p class="section-label">СОБЫТИЕ</p>
+          <label>НАЗВАНИЕ<input id="title-input" type="text" maxlength="28" value="Отпуск" /></label>
+          <div class="field-row"><label>ДАТА<input id="date-input" type="date" value="2027-06-01" /></label><label>ВРЕМЯ<input id="time-input" type="time" value="09:00" /></label></div>
+        </section>
+
+        <section class="settings-section">
+          <p class="section-label">СКЕЛЕТ</p>
+          <label>ВАРИАНТ
+            <select id="skeleton-select">
+              <option value="classic">Классический — дым</option>
+              <option value="warrior">Воин со щитом</option>
+              <option value="skeleton-blue">Скелет в полный рост</option>
+              <option value="demon">Демон в круге</option>
+              <option value="crossbones">Череп на костях</option>
+              <option value="enter-skull">Череп Enter</option>
+              <option value="reaper">Жнец</option>
+              <option value="water-skull">Череп из воды</option>
+              <option value="dark-skull">Тёмный череп</option>
+              <option value="cartoon-skull">Мультяшный череп</option>
+            </select>
+          </label>
+          <label class="color-row">ЦВЕТ СКЕЛЕТА<input id="color-input" type="color" value="#8bff3f" title="Выбрать цвет скелета" /></label>
+          <p class="panel-note">Клик по скелету меняет цвет случайно.</p>
+        </section>
+
+        <section class="settings-section">
+          <p class="section-label">ВИД ОТСЧЁТА</p>
+          <label>РАСКЛАДКА
+            <select id="layout-select"><option value="layout-cards">Карточки</option><option value="layout-flat">Плоская шкала</option><option value="layout-stamp">Компактный список</option></select>
+          </label>
+        </section>
+
+        <section class="settings-section">
+          <p class="section-label">ТЕМА</p>
+          <label>ОФОРМЛЕНИЕ
+            <select id="theme-select"><option value="dark">Тёмная — чёрный фон</option><option value="light">Светлая</option></select>
+          </label>
+        </section>
+
+        <section class="settings-section">
+          <p class="section-label">ОКНО</p>
+          <label class="check-row"><input id="always-on-top-input" type="checkbox" checked /><span>Поверх окон</span></label>
+          <label class="check-row"><input id="autostart-input" type="checkbox" /><span>Запускать вместе с Windows</span></label>
+          <label class="range-row" for="opacity-input"><span>ПРОЗРАЧНОСТЬ</span><output id="opacity-value">94%</output></label>
+          <input id="opacity-input" type="range" min="0.55" max="1" step="0.01" value="0.94" />
+          <p class="panel-note">Закрытие прячет виджет в системный трей. Перетащите его за шапку в любое место рабочего стола. Нажмите на скелет, чтобы получить новый случайный цвет.</p>
+        </section>
+
+        <button class="save-button" id="save-settings">СОХРАНИТЬ <span>↗</span></button>
+        <p class="panel-note save-note">Настройки хранятся локально на этом компьютере.</p>
+      </aside>
+    </main>
+    <script src="renderer.js"></script>
+  </body>
+</html>
