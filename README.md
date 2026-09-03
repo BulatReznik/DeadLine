@@ -47,7 +47,7 @@ npm start
 npm run dist
 ```
 
-Готовый файл появится в `release/DeadLine-1.0.0-portable.exe`. Его можно запускать на Windows без Node.js, npm и открытого консольного окна.
+Готовый файл появится в `release/DeadLine-1.0.0-portable.exe`. Его также можно скачать из раздела [Releases](https://github.com/BulatReznik/DeadLine/releases/latest). Он запускается на Windows без Node.js, npm и открытого консольного окна.
 
 ## Данные
 
