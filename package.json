@@ -30,8 +30,10 @@
       "assets/**/*",
       "fonts/**/*",
       "index.html",
+      "settings.html",
       "styles.css",
       "renderer.js",
+      "settings.js",
       "main.js",
       "preload.js",
       "package.json"

@@ -11,6 +11,7 @@ const WINDOW_LIMITS = { minWidth: 420, minHeight: 220, maxWidth: 720, maxHeight:
 const WINDOW_STATE_FILE = 'window-state.json';
 
 let widget;
+let settingsWindow;
 let tray;
 let quitting = false;
 let saveTimer;
@@ -87,6 +88,36 @@ function showWidget() {
   if (widget.isMinimized()) widget.restore();
   widget.show();
   widget.focus();
+}
+
+function showSettings() {
+  if (settingsWindow && !settingsWindow.isDestroyed()) {
+    settingsWindow.show();
+    settingsWindow.focus();
+    return;
+  }
+
+  settingsWindow = new BrowserWindow({
+    width: 480,
+    height: 700,
+    minWidth: 420,
+    minHeight: 560,
+    frame: false,
+    transparent: true,
+    resizable: true,
+    movable: true,
+    show: false,
+    backgroundColor: '#00000000',
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      preload: path.join(__dirname, 'preload.js'),
+    },
+  });
+
+  settingsWindow.loadFile(path.join(__dirname, 'settings.html'));
+  settingsWindow.on('closed', () => { settingsWindow = null; });
+  settingsWindow.once('ready-to-show', () => settingsWindow?.show());
 }
 
 function createTray() {
@@ -173,6 +204,11 @@ if (!singleInstance) {
 }
 
 ipcMain.on('widget:close', () => widget?.hide());
+ipcMain.on('widget:open-settings', showSettings);
+ipcMain.on('settings:close', () => settingsWindow?.close());
+ipcMain.on('widget:settings-updated', (_event, payload) => {
+  if (widget && !widget.isDestroyed()) widget.webContents.send('widget:settings-updated', payload);
+});
 
 ipcMain.handle('widget:set-always-on-top', (_event, value) => {
   const enabled = Boolean(value);
@@ -186,14 +222,20 @@ ipcMain.handle('widget:set-opacity', (_event, value) => {
   return opacity;
 });
 
-ipcMain.handle('widget:get-autostart', () => app.getLoginItemSettings().openAtLogin);
+function loginItemOptions() {
+  return {
+    path: process.env.PORTABLE_EXECUTABLE_FILE || process.execPath,
+    args: app.isPackaged ? [] : [app.getAppPath()],
+  };
+}
+
+ipcMain.handle('widget:get-autostart', () => app.getLoginItemSettings(loginItemOptions()).openAtLogin);
 
 ipcMain.handle('widget:set-autostart', (_event, value) => {
   const enabled = Boolean(value);
   app.setLoginItemSettings({
+    ...loginItemOptions(),
     openAtLogin: enabled,
-    path: process.execPath,
-    args: app.isPackaged ? [] : [app.getAppPath()],
   });
   return enabled;
 });
