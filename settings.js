@@ -3,6 +3,12 @@ const titleInput = document.querySelector('#title-input');
 const dateInput = document.querySelector('#date-input');
 const timeInput = document.querySelector('#time-input');
 const skeletonSelect = document.querySelector('#skeleton-select');
+const customImageOption = document.querySelector('#custom-image-option');
+const customImageButton = document.querySelector('#custom-image-button');
+const customImageReset = document.querySelector('#custom-image-reset');
+const customImagePreview = document.querySelector('#custom-image-preview');
+const customImageNote = document.querySelector('#custom-image-note');
+const tintImagesInput = document.querySelector('#tint-images-input');
 const colorInput = document.querySelector('#color-input');
 const layoutSelect = document.querySelector('#layout-select');
 const themeSelect = document.querySelector('#theme-select');
@@ -14,6 +20,8 @@ const defaultEvent = { title: 'Отпуск', date: '2027-06-01', time: '09:00' 
 const settings = JSON.parse(localStorage.getItem('bonebound-settings') || 'null') || {};
 const view = JSON.parse(localStorage.getItem('bonebound-view') || 'null') || {};
 const storedColor = localStorage.getItem('bonebound-color') || '#8bff3f';
+const maxCustomImageDimension = 4096;
+let customImage = null;
 
 function hslToHex(hue, saturation, lightness) {
   const channel = (offset) => {
@@ -68,12 +76,46 @@ function formPayload() {
       skeleton: skeletonSelect.value,
       layout: layoutSelect.value,
       theme: themeSelect.value,
+      tintImages: tintImagesInput.checked,
       opacity: Number(opacityInput.value),
       alwaysOnTop: alwaysOnTopInput.checked,
       autoStart: autostartInput.checked,
     },
     color: colorInput.value,
+    customImage,
   };
+}
+
+function updateCustomImageState(image) {
+  customImage = image || null;
+  customImageOption.hidden = !customImage;
+  customImageOption.disabled = !customImage;
+  customImageReset.disabled = !customImage;
+  customImageButton.firstChild.textContent = customImage ? 'ЗАМЕНИТЬ ИЗОБРАЖЕНИЕ ' : 'ЗАГРУЗИТЬ ИЗОБРАЖЕНИЕ ';
+  if (customImage) {
+    customImagePreview.hidden = false;
+    customImagePreview.src = customImage.url;
+  } else {
+    customImagePreview.removeAttribute('src');
+    customImagePreview.hidden = true;
+  }
+  customImageNote.textContent = customImage
+    ? `Загружено: ${customImage.name}`
+    : 'GIF, PNG, JPG, WEBP или BMP; максимум 20 МБ.';
+  if (!customImage && skeletonSelect.value === 'custom') skeletonSelect.value = 'classic';
+}
+
+function validateCustomImage(image) {
+  return new Promise((resolve) => {
+    const probe = new Image();
+    probe.onload = () => resolve(
+      probe.naturalWidth <= maxCustomImageDimension && probe.naturalHeight <= maxCustomImageDimension
+        ? ''
+        : 'Изображение слишком большое. Максимальный размер — 4096×4096 пикселей.',
+    );
+    probe.onerror = () => resolve('Не удалось прочитать изображение.');
+    probe.src = `${image.url}?check=${Date.now()}`;
+  });
 }
 
 function preview() {
@@ -100,6 +142,7 @@ titleInput.value = oldDefaults ? defaultEvent.title : (settings.title || default
 dateInput.value = oldDefaults ? defaultEvent.date : (settings.date || defaultEvent.date);
 timeInput.value = oldDefaults ? defaultEvent.time : (settings.time || defaultEvent.time);
 skeletonSelect.value = view.skeleton || 'classic';
+tintImagesInput.checked = view.tintImages !== false;
 layoutSelect.value = view.layout || 'layout-cards';
 themeSelect.value = view.theme || 'dark';
 opacityInput.value = view.opacity || '.94';
@@ -109,12 +152,47 @@ colorInput.value = /^#[0-9a-f]{6}$/i.test(storedColor) ? storedColor : '#8bff3f'
 setTheme(themeSelect.value);
 applyColor(colorInput.value);
 updateOpacityLabel();
+window.widgetWindow?.getCustomImage().then(updateCustomImageState);
 
 document.querySelector('#settings-close').addEventListener('click', () => window.widgetWindow?.closeSettings());
 document.querySelector('#save-settings').addEventListener('click', save);
 skeletonSelect.addEventListener('change', preview);
+tintImagesInput.addEventListener('change', preview);
 themeSelect.addEventListener('change', preview);
 colorInput.addEventListener('input', preview);
+customImageButton.addEventListener('click', async () => {
+  const result = await window.widgetWindow?.pickCustomImage();
+  if (result?.error) {
+    customImageNote.textContent = result.error;
+    return;
+  }
+  if (result) {
+    const error = await validateCustomImage(result);
+    if (error) {
+      await window.widgetWindow?.removeCustomImage();
+      updateCustomImageState(null);
+      customImageNote.textContent = error;
+      return;
+    }
+    updateCustomImageState(result);
+    skeletonSelect.value = 'custom';
+    preview();
+  }
+});
+customImageReset.addEventListener('click', async () => {
+  if (!await window.widgetWindow?.removeCustomImage()) {
+    customImageNote.textContent = 'Не удалось удалить изображение.';
+    return;
+  }
+  updateCustomImageState(null);
+  skeletonSelect.value = 'classic';
+  preview();
+});
+customImagePreview.addEventListener('error', () => {
+  customImagePreview.removeAttribute('src');
+  customImagePreview.hidden = true;
+  customImageNote.textContent = 'Не удалось показать изображение.';
+});
 opacityInput.addEventListener('input', () => {
   updateOpacityLabel();
   window.widgetWindow?.setOpacity(opacityInput.value);

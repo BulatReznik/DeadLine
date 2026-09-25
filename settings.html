@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; script-src 'self';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: file:; style-src 'self'; font-src 'self'; script-src 'self';" />
     <title>DeadLine — Настройки</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -42,10 +42,18 @@
               <option value="water-skull">Череп из воды</option>
               <option value="dark-skull">Тёмный череп</option>
               <option value="cartoon-skull">Мультяшный череп</option>
+              <option id="custom-image-option" value="custom" hidden>Своё изображение</option>
             </select>
           </label>
+          <div class="image-actions">
+            <button class="save-button image-button" id="custom-image-button" type="button">ЗАГРУЗИТЬ ИЗОБРАЖЕНИЕ <span>↗</span></button>
+            <button class="secondary-button" id="custom-image-reset" type="button">СБРОСИТЬ</button>
+          </div>
+          <img class="custom-image-preview" id="custom-image-preview" alt="Предпросмотр пользовательского изображения" hidden />
+          <p class="panel-note" id="custom-image-note">GIF, PNG, JPG, WEBP или BMP; максимум 20 МБ.</p>
           <label class="color-row">ЦВЕТ СКЕЛЕТА<input id="color-input" type="color" value="#8bff3f" title="Выбрать цвет скелета" /></label>
           <p class="panel-note">Клик по скелету меняет цвет случайно.</p>
+          <label class="check-row image-tint-row"><input id="tint-images-input" type="checkbox" checked /><span>Окрашивать изображения выбранным цветом</span></label>
         </section>
 
         <section class="settings-section">

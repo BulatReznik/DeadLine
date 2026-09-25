@@ -14,4 +14,7 @@ contextBridge.exposeInMainWorld('widgetWindow', {
   setOpacity: (value) => ipcRenderer.invoke('widget:set-opacity', value),
   getAutoStart: () => ipcRenderer.invoke('widget:get-autostart'),
   setAutoStart: (value) => ipcRenderer.invoke('widget:set-autostart', value),
+  getCustomImage: () => ipcRenderer.invoke('widget:get-custom-image'),
+  pickCustomImage: () => ipcRenderer.invoke('widget:pick-custom-image'),
+  removeCustomImage: () => ipcRenderer.invoke('widget:remove-custom-image'),
 });

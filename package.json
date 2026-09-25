@@ -1,6 +1,6 @@
 {
   "name": "countdown-cool-skeletons",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "A spooky Windows 11 desktop countdown widget.",
   "main": "main.js",

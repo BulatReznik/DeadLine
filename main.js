@@ -2,13 +2,17 @@
 // must always load Electron's main-process API, not the Node compatibility mode.
 delete process.env.ELECTRON_RUN_AS_NODE;
 
-const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, screen } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, Tray, nativeImage, screen } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
 const DEFAULT_SIZE = { width: 560, height: 280 };
 const WINDOW_LIMITS = { minWidth: 420, minHeight: 220, maxWidth: 720, maxHeight: 340 };
 const WINDOW_STATE_FILE = 'window-state.json';
+const CUSTOM_IMAGE_PATTERN = /^custom-image\.(gif|png|jpe?g|webp|bmp)$/i;
+const CUSTOM_IMAGE_EXTENSIONS = ['gif', 'png', 'jpg', 'jpeg', 'webp', 'bmp'];
+const MAX_CUSTOM_IMAGE_BYTES = 20 * 1024 * 1024;
 
 let widget;
 let settingsWindow;
@@ -81,6 +85,27 @@ function saveWindowStateNow() {
 function queueWindowStateSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveWindowStateNow, 150);
+}
+
+function customImageData() {
+  try {
+    const fileName = fs.readdirSync(app.getPath('userData')).find((name) => CUSTOM_IMAGE_PATTERN.test(name));
+    if (!fileName) return null;
+    return {
+      name: fileName.replace(/^custom-image\./i, ''),
+      url: pathToFileURL(path.join(app.getPath('userData'), fileName)).href,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function removeCustomImages(except) {
+  for (const fileName of fs.readdirSync(app.getPath('userData'))) {
+    if (CUSTOM_IMAGE_PATTERN.test(fileName) && fileName !== except) {
+      fs.rmSync(path.join(app.getPath('userData'), fileName), { force: true });
+    }
+  }
 }
 
 function showWidget() {
@@ -238,4 +263,51 @@ ipcMain.handle('widget:set-autostart', (_event, value) => {
     openAtLogin: enabled,
   });
   return enabled;
+});
+
+ipcMain.handle('widget:get-custom-image', () => customImageData());
+
+ipcMain.handle('widget:pick-custom-image', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog(settingsWindow || widget, {
+    title: 'Выберите изображение',
+    properties: ['openFile'],
+    filters: [{ name: 'Изображения', extensions: CUSTOM_IMAGE_EXTENSIONS }],
+  });
+  if (canceled || !filePaths[0]) return null;
+
+  const sourcePath = filePaths[0];
+  const extension = path.extname(sourcePath).slice(1).toLowerCase();
+  if (!CUSTOM_IMAGE_EXTENSIONS.includes(extension)) {
+    return { error: 'Поддерживаются GIF, PNG, JPG, WEBP и BMP.' };
+  }
+
+  let temporaryPath;
+  try {
+    const { size } = fs.statSync(sourcePath);
+    if (size > MAX_CUSTOM_IMAGE_BYTES) {
+      return { error: 'Файл слишком большой. Максимальный размер — 20 МБ.' };
+    }
+    const userDataPath = app.getPath('userData');
+    fs.mkdirSync(userDataPath, { recursive: true });
+    const fileName = `custom-image.${extension}`;
+    const targetPath = path.join(userDataPath, fileName);
+    temporaryPath = `${targetPath}.tmp`;
+    fs.copyFileSync(sourcePath, temporaryPath);
+    fs.rmSync(targetPath, { force: true });
+    fs.renameSync(temporaryPath, targetPath);
+    removeCustomImages(fileName);
+    return customImageData();
+  } catch {
+    if (temporaryPath) fs.rmSync(temporaryPath, { force: true });
+    return { error: 'Не удалось сохранить изображение.' };
+  }
+});
+
+ipcMain.handle('widget:remove-custom-image', () => {
+  try {
+    removeCustomImages();
+    return true;
+  } catch {
+    return false;
+  }
 });

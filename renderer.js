@@ -23,6 +23,7 @@ const skeletons = {
 };
 const storedColor = localStorage.getItem('bonebound-color') || '';
 let currentSkeletonColor = /^#[0-9a-f]{6}$/i.test(storedColor) ? storedColor : '#8bff3f';
+let customImageInfo = null;
 let target;
 
 function readSettings() {
@@ -93,17 +94,27 @@ function hslToHex(hue, saturation, lightness) {
     .map((value) => Math.round(value * 255).toString(16).padStart(2, '0')).join('').replace(/^/, '#');
 }
 
-function setSkeleton(value) {
-  const skeleton = skeletons[value] || skeletons.classic;
+function setSkeleton(value, customImage = customImageInfo) {
+  const isCustom = value === 'custom' && customImage?.url;
+  const skeleton = isCustom
+    ? { src: customImage.url, alt: `Пользовательское изображение ${customImage.name}`, custom: true }
+    : skeletons[value] || skeletons.classic;
+  const skeletonWidth = skeleton.width || 230;
   skeletonImage.src = skeleton.src;
   skeletonImage.alt = skeleton.alt;
-  skeletonStage.style.setProperty('--skeleton-width', `${skeleton.width}px`);
-  skeletonStage.style.setProperty('--skeleton-margin-left', `${skeleton.width / -2}px`);
+  skeletonImage.dataset.custom = String(Boolean(skeleton.custom));
+  skeletonStage.classList.toggle('custom-image-stage', Boolean(skeleton.custom));
+  skeletonStage.style.setProperty('--skeleton-width', `${skeletonWidth}px`);
+  skeletonStage.style.setProperty('--skeleton-margin-left', `${skeletonWidth / -2}px`);
   skeletonStage.style.setProperty('--skeleton-offset', `${skeleton.offset || 0}px`);
   const anchoredComposition = skeleton.composite;
   skeletonStage.style.setProperty('--skeleton-top', anchoredComposition ? 'auto' : '50%');
   skeletonStage.style.setProperty('--skeleton-bottom', anchoredComposition ? '-17px' : 'auto');
-  skeletonStage.style.setProperty('--skeleton-margin-top', anchoredComposition ? '0px' : `${skeleton.width / -2}px`);
+  skeletonStage.style.setProperty('--skeleton-margin-top', anchoredComposition ? '0px' : `${skeletonWidth / -2}px`);
+}
+
+function setImageTint(enabled) {
+  root.classList.toggle('no-image-tint', !enabled);
 }
 
 function applySkeletonColor(color) {
@@ -151,6 +162,7 @@ function updateCountdown() {
 }
 
 function applySettings(payload = {}) {
+  if (payload.customImage !== undefined) customImageInfo = payload.customImage;
   const settings = payload.settings || readSettings();
   const view = payload.view || readView();
   const color = payload.color || currentSkeletonColor;
@@ -158,9 +170,10 @@ function applySettings(payload = {}) {
   eventTitle.textContent = settings.title?.trim() || defaultEvent.title;
   eventDateLabel.textContent = formatDate(target);
   eventTimeLabel.textContent = settings.time || defaultEvent.time;
-  setSkeleton(view.skeleton || 'classic');
+  setSkeleton(view.skeleton === 'custom' && customImageInfo ? 'custom' : (view.skeleton || 'classic'));
   setTheme(view.theme || 'dark');
   setLayout(view.layout || 'layout-cards');
+  setImageTint(view.tintImages !== false);
   applySkeletonColor(color);
   window.widgetWindow?.setOpacity(view.opacity ?? '.94');
   window.widgetWindow?.setAlwaysOnTop(view.alwaysOnTop !== false);
@@ -168,12 +181,22 @@ function applySettings(payload = {}) {
 }
 
 applySettings();
+window.widgetWindow?.getCustomImage().then((image) => {
+  customImageInfo = image;
+  if (readView().skeleton === 'custom') applySettings();
+});
 setInterval(updateCountdown, 1000);
 
 document.querySelector('#settings-trigger').addEventListener('click', () => window.widgetWindow?.openSettings());
 document.querySelector('#close-button').addEventListener('click', () => window.widgetWindow?.close());
 headColorTrigger.addEventListener('click', randomSkeletonColor);
 window.widgetWindow?.onSettingsUpdated((payload) => applySettings(payload));
+skeletonImage.addEventListener('error', () => {
+  if (skeletonImage.dataset.custom === 'true') {
+    customImageInfo = null;
+    setSkeleton('classic');
+  }
+});
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') window.widgetWindow?.close();
